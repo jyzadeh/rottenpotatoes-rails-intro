@@ -11,34 +11,42 @@ class MoviesController < ApplicationController
   end
 
   def index
-    @all_ratings = Movie.get_possible_ratings
-
-    unless params[:ratings].nil?
-      @filtered_ratings = params[:ratings]
-      session[:filtered_ratings] = @filtered_ratings
-    end
-
-    unless params[:sorting_mechanism].nil?
-      session[:sorting_mechanism] = params[:sorting_mechanism]
-    end
-
-    if params[:ratings].nil? && params[:sorting_mechanism].nil? && session[filtered_ratings]
-      @filtered_ratings = session[:filtered_ratings]
-      @sorting_mechanism = session[:sorting_mechanism]
-      flash.keep
-      redirect_to movies_path({order_by: @sorting_mechanism, ratings: @filtered_ratings})
-    end
-
     @movies = Movie.all
+    @selectedRatings = {}
+    @all_ratings = ['G','PG','PG-13','R', 'NC-17']
+    @requiresRedirect = false
 
-    if session[:sorting_mechanism] == "title"
-      @movies = @movies.sort! {|a,b| a.title <=> b.title}
-      @movie_highlight = "hilite"
-    elsif session[:sorting_mechanism] == "release_date"
-      @movies = @movies.sort! {|a,b| a.release_date <=> b.release_date}
-      @date_highlight = "hilite"
+    @all_ratings.each { |rating|
+      if params[:ratings]
+        @selectedRatings[rating] = params[:ratings].has_key?(rating)
+      else
+        @selectedRatings[rating] = false
+      end
+    }
+
+    @movies = @movies.find_all{|m| @selectedRatings[m.rating]}
+    
+    if params[:ratings]
+      session[:ratings] = params[:ratings]
+    elsif session[:ratings]
+      params[:ratings] = session[:ratings]
+      @requiresRedirect = true
     end
     
+    if params[:sort] == 'title'
+      session[:sort] = params[:sort]
+      @movies = @movies.sort_by{|m| m.title}
+    elsif params[:sort] == 'date'
+      session[:sort] = params[:sort]
+      @movies = @movies.sort_by{|m| m.release_date}
+    elsif session[:sort]
+      params[:sort] = session[:sort]
+      @requiresRedirect = true
+    end
+    
+    if @requiresRedirect
+      redirect_to movies_path(:sort=>params[:sort], :ratings =>params[:ratings])
+    end
   end
 
   def new
