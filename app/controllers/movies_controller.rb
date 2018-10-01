@@ -1,36 +1,23 @@
 class MoviesController < ApplicationController
 
-  def index
-    @all_ratings = ['G', 'PG', 'PG-13', 'R']
-
-    session[:ratings] = params[:ratings] if params[:ratings]
-    session[:sort]    = params[:sort]    if params[:sort]
-
-    if session[:ratings] || session[:sort]
-      case session[:sort]
-      when 'title'
-        @title_hilite = 'hilite'
-      when 'release_date'
-        @release_hilite = 'hilite'
-      end
-
-      session[:ratings] ||= @all_ratings
-      @ratings = session[:ratings]
-      @ratings = @ratings.keys if @ratings.respond_to?(:keys)
-      @movies = Movie.find(:all, order: session[:sort], conditions: ["rating IN (?)", @ratings])
-    else
-      @movies = Movie.all
-    end
-
-    if session[:ratings] != params[:ratings] || session[:sort] != params[:sort]
-      redirect_to movies_path(ratings: session[:ratings], sort: session[:sort])
-    end
-  end
-
   def show
     id = params[:id] # retrieve movie ID from URI route
-    @movie = Movie.find(id) # Look up movie by unique ID
+    @movie = Movie.find(id) # look up movie by unique ID
     # will render app/views/movies/show.<extension> by default
+  end
+
+  def index
+    @all_ratings = Movie.order(:rating).select(:rating).map(&:rating).uniq
+    @checked_ratings = check
+    @checked_ratings.each do |rating|
+      params[rating] = true
+    end
+
+    if params[:sort]
+      @movies = Movie.order(params[:sort])
+    else
+      @movies = Movie.where(:rating => @checked_ratings)
+    end
   end
 
   def new
@@ -59,6 +46,16 @@ class MoviesController < ApplicationController
     @movie.destroy
     flash[:notice] = "Movie '#{@movie.title}' deleted."
     redirect_to movies_path
+  end
+
+  private
+
+  def check
+    if params[:ratings]
+      params[:ratings].keys
+    else
+      @all_ratings
+    end
   end
 
 end

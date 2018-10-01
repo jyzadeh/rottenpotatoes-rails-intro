@@ -1,2 +1,3 @@
 class Movie < ActiveRecord::Base
-end
+    attr_accessible :title, :rating, :description, :release_date
+  end
