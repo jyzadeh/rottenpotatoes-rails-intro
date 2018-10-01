@@ -23,6 +23,7 @@ class MoviesController < ApplicationController
         @selectedRatings[rating] = false
       end
     }
+    
 
     @movies = @movies.find_all{|m| @selectedRatings[m.rating]}
     
