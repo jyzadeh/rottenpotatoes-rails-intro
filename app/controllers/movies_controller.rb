@@ -11,7 +11,34 @@ class MoviesController < ApplicationController
   end
 
   def index
+    @all_ratings = Movie.get_possible_ratings
+
+    unless params[:ratings].nil?
+      @filtered_ratings = params[:ratings]
+      session[:filtered_ratings] = @filtered_ratings
+    end
+
+    unless params[:sorting_mechanism].nil?
+      session[:sorting_mechanism] = params[:sorting_mechanism]
+    end
+
+    if params[:ratings].nil? && params[:sorting_mechanism].nil? && session[filtered_ratings]
+      @filtered_ratings = session[:filtered_ratings]
+      @sorting_mechanism = session[:sorting_mechanism]
+      flash.keep
+      redirect_to movies_path({order_by: @sorting_mechanism, ratings: @filtered_ratings})
+    end
+
     @movies = Movie.all
+
+    if session[:sorting_mechanism] == "title"
+      @movies = @movies.sort! {|a,b| a.title <=> b.title}
+      @movie_highlight = "hilite"
+    elsif session[:sorting_mechanism] == "release_date"
+      @movies = @movies.sort! {|a,b| a.release_date <=> b.release_date}
+      @date_highlight = "hilite"
+    end
+    
   end
 
   def new
