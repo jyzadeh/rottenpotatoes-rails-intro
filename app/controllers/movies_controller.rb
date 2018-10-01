@@ -13,18 +13,21 @@ class MoviesController < ApplicationController
   def index
     @movies = Movie.all
     @selectedRatings = {}
-    @all_ratings = ['G','PG','PG-13','R', 'NC-17']
+    @all_ratings = ['G','PG','PG-13','R','NC-17']
     @requiresRedirect = false
+    if !session[:ratings]
+      session[:ratings] = @all_ratings
+      @requiresRedirect = true
+    end
 
     @all_ratings.each { |rating|
       if params[:ratings]
-        @selectedRatings[rating] = params[:ratings].has_key?(rating)
+        @selectedRatings[rating] = params[:ratings].include?(rating)
       else
         @selectedRatings[rating] = false
       end
     }
     
-
     @movies = @movies.find_all{|m| @selectedRatings[m.rating]}
     
     if params[:ratings]
