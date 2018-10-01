@@ -1,6 +1,5 @@
 Possible future changes
 -----------------------
-
 * version all gems in Gemfile
 * clean rails new
 * rails 5?
